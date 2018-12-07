@@ -296,6 +296,70 @@ Movie.fetch = function(location) {
     });
 };
 
+
+//----------------------MEET UP-----------------------------------------------------
+function Meetup(meetup) {
+  this.link = meetup.link;
+  this.name = meetup.name;
+  this.creation_date = meetup.creation_date;
+  this.host = meetup.host;
+}
+
+// helper function
+function getMeetup(req, res) {
+  const meetupHandler = {
+    location: req.query.data,
+    cacheHit: function(result) {
+      res.send(result.rows);
+    },
+    cacheMiss: function() {
+      meetup.fetch(req.query.data)
+        .then( results => res.send(results))
+        .catch(console.error);
+    },
+  };
+
+  Meetup.lookup(meetupHandler);
+}
+//save method
+Meetup.prototype.save = function(id) {
+  const SQL = `INSERT INTO meetups (link,name,creation_date,host) VALUES ($1,$2,$3,$4);`;
+  const values = Object.values(this);
+  values.push(id);
+  client.query(SQL, values);
+};
+
+//lookup method
+Meetup.lookup = function(handler) {
+  const SQL = `SELECT * FROM meetups WHERE title=$1;`;
+  client.query(SQL, [handler.location.id])
+    .then(result => {
+      if (result.rowCount > 0) {
+        handler.cacheHit(result);
+      } else {
+        handler.cacheMiss();
+      }
+    })
+    .catch(error => handleError(error));
+};
+
+//fetch method
+Meetup.fetch = function(location) {
+  const url = `https://api.meetup.com/2/open_events?&key=${process.env.MEETUP_API_KEY}&sign=true&photo-host=public&lat=${location.latitude}&topic=softwaredev&lon=${location.longitude}&page=20`;
+  return superagent.get(url)
+    .then(result => {
+      console.log('meetups results', result.body.results);
+      const meetupSummary = result.body.results.map(meetup => {
+        const summary = new Meetup(meetup);
+        summary.save(location.id);
+        return summary;
+      });
+      return meetupSummary;
+    });
+};
+
+
+
 app.listen(PORT, () => {
   console.log(`listening on ${PORT}`);
 });
