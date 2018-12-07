@@ -1,0 +1,21 @@
+{
+  "name": "lab-09-back-end",
+  "version": "1.0.0",
+  "description": "lab-09-back-end Author: Ryna Truong && Dez Teague Version: 1.0.0 (increment the patch/fix version number if you make more commits past your first submission)",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rynnnaa/lab-09-back-end.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rynnnaa/lab-09-back-end/issues"
+  },
+  "homepage": "https://github.com/rynnnaa/lab-09-back-end#readme"
+}
