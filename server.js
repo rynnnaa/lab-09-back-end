@@ -39,6 +39,12 @@ app.get('/movies', getMovie)
 app.get('/weather', getWeather);
 //api route
 app.get('/yelp', getReview);
+//api routh
+app.get('/meetup', getMeetup);
+//api routh
+app.get('/trail', getTrail);
+
+
 
 // -------------------------LOCATION-------------------------
 //location constructor - maps model to schema
@@ -313,7 +319,7 @@ function getMeetup(req, res) {
       res.send(result.rows);
     },
     cacheMiss: function() {
-      meetup.fetch(req.query.data)
+      Meetup.fetch(req.query.data)
         .then( results => res.send(results))
         .catch(console.error);
     },
@@ -355,6 +361,73 @@ Meetup.fetch = function(location) {
         return summary;
       });
       return meetupSummary;
+    });
+};
+
+// ----------------------------TRAILS----------------------------------------------
+function Trail(trail) {
+  this.name = trail.name;
+  this.location = trail.location;
+  this.length = trail.length;
+  this.stars = trail.stars;
+  this.star_votes = trail.starVotes;
+  this.summary = trail.summary;
+  this.trail_url = trail.trail_url;
+  this.conditions = trail.conditions;
+  this.condition_date = trail.conditionDate.split(' ').slice(0, 1).toString();
+  this.condition_time = trail.conditionDate.split(' ').slice(1, 2).toString();
+}
+
+// helper function
+function getTrail(req, res) {
+  const trailHandler = {
+    location: req.query.data,
+    cacheHit: function(result) {
+      res.send(result.rows);
+    },
+    cacheMiss: function() {
+      Trail.fetch(req.query.data)
+        .then( results => res.send(results))
+        .catch(console.error);
+    },
+  };
+
+  Trail.lookup(trailHandler);
+}
+//save method
+Trail.prototype.save = function(id) {
+  const SQL = `INSERT INTO trails (name, location,length,stars,star_votes,summary,trail_url,conditions,condition_date,condition_time) VALUES ($1,$2,$3,$4,$5,$6,$,7,$8,$9,$10);`;
+  const values = Object.values(this);
+  values.push(id);
+  client.query(SQL, values);
+};
+
+//lookup method
+Trail.lookup = function(handler) {
+  const SQL = `SELECT * FROM trails WHERE title=$1;`;
+  client.query(SQL, [handler.location.id])
+    .then(result => {
+      if (result.rowCount > 0) {
+        handler.cacheHit(result);
+      } else {
+        handler.cacheMiss();
+      }
+    })
+    .catch(error => handleError(error));
+};
+
+//fetch method
+Trail.fetch = function(location) {
+  const url = `https://www.hikingproject.com/data/get-trails?lat=${location.latitude}&lon=${location.longitude}&maxDistance=20&key=${process.env.TRAIL_API_KEY}`;
+  return superagent.get(url)
+    .then(result => {
+      console.log('trails results', result.body.results);
+      const trailSummary = result.body.results.map(trail => {
+        const summary = new Trail(trail);
+        summary.save(location.id);
+        return summary;
+      });
+      return trailSummary;
     });
 };
 
