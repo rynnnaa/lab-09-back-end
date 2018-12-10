@@ -6,9 +6,6 @@ const superagent = require('superagent');
 const cors = require('cors');
 const pg = require('pg');
 
-// app.use(express.urlencoded({ extended: true }));s
-
-
 // get proect enviroment variables
 require('dotenv').config();
 
@@ -34,9 +31,9 @@ app.use(cors());
 //API route
 app.get('/location', getLocation);
 // //api route
-app.get('/movies', getMovie)
-//API route
 app.get('/weather', getWeather);
+//API route
+app.get('/movies', getMovie)
 //api route
 app.get('/yelp', getReview);
 //api routh
@@ -56,6 +53,7 @@ function Location(query, data) {
   this.longitude = data.geometry.location.lng;
 }
 
+//call function for location
 function getLocation(req, res) {
   const locationHandler = {
     query: req.query.data,
@@ -129,7 +127,13 @@ function getWeather(req, res) {
   const weatherHandler = {
     location: req.query.data,
     cacheHit: function(result) {
-      res.send(result.rows);
+      let weatherAge = (Date.now() - result.rows[0].created_at) / (1000 * 60);
+      if (weatherAge > 30) {
+        Weather.deleteByLocationId(Weather.tableName, req.query.data.id);
+        this.cacheMiss();
+      } else {
+        res.send(result.rows);
+      }
     },
     cacheMiss: function() {
       Weather.fetch(req.query.data)
@@ -190,7 +194,13 @@ function getReview(req, res) {
   const yelpHandler = {
     location: req.query.data,
     cacheHit: function(result) {
-      res.send(result.rows);
+      let yelpAge = (Date.now() - result.rows[0].created_at) / (1000 * 60 * 60);
+      if (yelpAge > 24) {
+        Yelp.deleteByLocationId(Yelp.tablename, req.query.data.id);
+        this.cacheMiss();
+      } else {
+        res.send(result.rows);
+      }
     },
     cacheMiss: function() {
       Yelp.fetch(req.query.data)
@@ -254,7 +264,13 @@ function getMovie(req, res) {
   const movieHandler = {
     location: req.query.data,
     cacheHit: function(result) {
-      res.send(result.rows);
+      let movieAge = (Date.now()- result.rows[0].created_at) / (1000 * 60 * 60 * 24);
+      if (movieAge > 30) {
+        Movie.deleteByLocationId(Movie.tableName, req.query.data.id);
+        this.cacheMiss();
+      } else {
+        res.send(result.rows);
+      }
     },
     cacheMiss: function() {
       Movie.fetch(req.query.data)
@@ -316,7 +332,13 @@ function getMeetup(req, res) {
   const meetupHandler = {
     location: req.query.data,
     cacheHit: function(result) {
-      res.send(result.rows);
+      let meetupAge = (Date.now()- result.rows[0].created_at) / (1000 * 60 * 60);
+      if (meetupAge > 7){
+        Meetup.deleteByLocationId(Meetup.tableName, req.query.data.id);
+        this.cacheMiss();
+      } else {
+        res.send(result.rows);
+      }
     },
     cacheMiss: function() {
       Meetup.fetch(req.query.data)
@@ -383,7 +405,13 @@ function getTrail(req, res) {
   const trailHandler = {
     location: req.query.data,
     cacheHit: function(result) {
-      res.send(result.rows);
+      let trailAge = (Date.now()- result.rows[0].created_at) / (1000 * 60 * 60 * 24);
+      if (trailAge > 7) {
+        Trail.deleteByLocationId(Trail.tableName, req.query.data.id);
+        this.cacheMiss();
+      } else {
+        res.send(result.rows);
+      }
     },
     cacheMiss: function() {
       Trail.fetch(req.query.data)
